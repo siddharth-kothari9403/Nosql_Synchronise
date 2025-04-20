@@ -2,17 +2,29 @@ package com.example.demo.ImportCSVs;
 import com.mongodb.client.*;
 import com.opencsv.CSVReader;
 import org.bson.Document;
-
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import java.io.FileReader;
 import java.util.*;
 
+@Configuration
+@PropertySource("classpath:application.properties")
 public class CsvToMongoImporter {
 
-    public static void importFile() {
-        String csvFilePath = "./data/student_course_grades.csv"; // Replace with your CSV path
-        String mongoUri = "mongodb://localhost:27017";
-        String databaseName = "student_course_grades";
-        String collectionName = "student_grades";
+    @Value("${csv.file.path}")
+    private String csvFilePath;
+
+    @Value("${mongo.uri}")
+    private String mongoUri;
+
+    @Value("${mongo.database}")
+    private String databaseName;
+
+    @Value("${mongo.collection}")
+    private String collectionName;
+
+    public void importFile() {
 
         try (
                 MongoClient mongoClient = MongoClients.create(mongoUri);
