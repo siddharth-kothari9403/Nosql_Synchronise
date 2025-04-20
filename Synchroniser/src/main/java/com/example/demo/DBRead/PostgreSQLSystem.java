@@ -18,12 +18,15 @@ public class PostgreSQLSystem extends DBSystem {
     }
 
     @Override
-    public String readGrade(String studentId) {
+    public String readGrade(String studentId, String courseId) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("SELECT grade FROM grades WHERE student_id = ?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT grade FROM grades WHERE student_id = ? AND course_id = ?");
             stmt.setString(1, studentId);
+            stmt.setString(2, courseId);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return rs.getString("grade");
+            if (rs.next()) {
+                return rs.getString("grade");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -31,14 +34,15 @@ public class PostgreSQLSystem extends DBSystem {
     }
 
     @Override
-    public void updateGrade(String studentId, String grade) {
+    public void updateGrade(String studentId,String couseId,String grade) {
         try {
-            PreparedStatement stmt = conn.prepareStatement(
-                "INSERT INTO grades(student_id, grade) VALUES(?, ?) ON CONFLICT (student_id) DO UPDATE SET grade = EXCLUDED.grade");
+            PreparedStatement stmt = conn.prepareStatement("INSERT INTO grades(student_id, course_id, grade) VALUES(?, ?, ?) ON CONFLICT (student_id, course_id) DO UPDATE SET grade = ?");
             stmt.setString(1, studentId);
-            stmt.setString(2, grade);
+            stmt.setString(2, couseId);
+            stmt.setString(3, grade);
+            stmt.setString(4, grade);
             stmt.executeUpdate();
-            logOperation("update", studentId, grade);
+            logOperation("update", studentId, couseId, grade);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -48,8 +52,8 @@ public class PostgreSQLSystem extends DBSystem {
     public void merge(String fromSystem) {
         for (Operation op : oplogs.getOrDefault(fromSystem, new ArrayList<>())) {
             if (op.opType.equals("update")) {
-                updateGrade(op.studentId, op.value);
-                logOperation("merge_update", op.studentId, op.value);
+                updateGrade(op.studentId,op.courseId,op.value);
+                logOperation("merge_update", op.studentId, op.courseId,op.value);
             }
         }
     }
