@@ -7,12 +7,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import javax.sql.DataSource;
 import org.apache.commons.dbcp.BasicDataSource;
 
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -24,19 +24,21 @@ public class CsvToHiveImporter {
     @Value("${hive.url}")
     private String url;
 
-    @Value("${hive.user}")
-    private String user;
+//    @Value("${hive.user}")
+//    private String user;
+//
+//    @Value("${hive.password}")
+//    private String password;
 
-    @Value("${hive.password}")
-    private String password;
+    Path tempCsvFile = Paths.get("data/student_grades_noheader.csv").toAbsolutePath();
 
     public DataSource getHiveDataSource() {
 
         BasicDataSource dataSource = new BasicDataSource();
         dataSource.setUrl(url);
         dataSource.setDriverClassName("org.apache.hive.jdbc.HiveDriver");
-        dataSource.setUsername(user);
-        dataSource.setPassword(password);
+//        dataSource.setUsername(user);
+//        dataSource.setPassword(password);
 
         return dataSource;
     }
@@ -49,7 +51,7 @@ public class CsvToHiveImporter {
         JdbcTemplate jdbcTemplate = getJDBCTemplate();
         try (
                 CSVReader reader = new CSVReader(new FileReader(csvFilePath));
-                Connection conn = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()
+                BufferedWriter writer = Files.newBufferedWriter(tempCsvFile);
         ) {
             // Drop the table if it exists
             String dropTableSQL = "DROP TABLE IF EXISTS student_grades";
@@ -74,32 +76,24 @@ public class CsvToHiveImporter {
                 return;
             }
 
-            // Prepare batch insert
-            String insertSQL = "INSERT INTO TABLE student_grades VALUES (?, ?, ?, ?, ?)";
-
-            // Prepare data for batch insert
-            List<Object[]> batchArgs = new ArrayList<>();
+            // Write the remaining rows to the new temporary CSV file
             String[] line;
-            int count = 0;
-
+            int rowCount = 0;
             while ((line = reader.readNext()) != null) {
-                // Add data to batch (use Object[] to match JdbcTemplate batchUpdate requirement)
-                batchArgs.add(new Object[]{line[0], line[1], line[2], line[3], line[4]});
-                count++;
-
-                if (count % 100 == 0) {
-                    jdbcTemplate.batchUpdate(insertSQL, batchArgs);
-                    batchArgs.clear();  // Clear batch arguments after each batch execution
-                    System.out.println("Inserted " + count + " rows into Hive.");
-                }
+                writer.write(String.join(",", line));
+                writer.newLine();
+                rowCount++;
             }
 
-            // Execute the final batch
-            if (!batchArgs.isEmpty()) {
-                jdbcTemplate.batchUpdate(insertSQL, batchArgs);
-            }
+            // Load data from the new CSV (without header)
+            String loadDataSQL = "LOAD DATA LOCAL INPATH '/opt/hive/mydata/student_grades_noheader.csv' INTO TABLE student_grades";
+            jdbcTemplate.execute(loadDataSQL);
+            System.out.println("Loaded CSV data into Hive.");
 
-            System.out.println("Inserted " + count + " rows into Hive.");
+            // Clean up temporary file
+            Files.deleteIfExists(tempCsvFile);
+
+            System.out.println("Inserted " + rowCount + " rows into Hive.");
 
         } catch (Exception e) {
             e.printStackTrace();

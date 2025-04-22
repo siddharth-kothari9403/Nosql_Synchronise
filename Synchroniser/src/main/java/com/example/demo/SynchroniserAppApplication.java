@@ -1,6 +1,7 @@
 package com.example.demo;
 import com.example.demo.DBRead.MongoDBSystem;
 import com.example.demo.DBRead.PostgreSQLSystem;
+import com.example.demo.ImportCSVs.CsvToHiveImporter;
 import com.example.demo.DBRead.HiveSystem;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -15,12 +16,12 @@ public class SynchroniserAppApplication {
 	}
 
 	@Bean
-	public CommandLineRunner run(PostgreSQLSystem postgreSQLSystem, MongoDBSystem mongoDBSystem, HiveSystem hiveSystem) {
+	public CommandLineRunner run(PostgreSQLSystem postgreSQLSystem, MongoDBSystem mongoDBSystem, CsvToHiveImporter csvToHiveImporter, HiveSystem hiveSystem) {
 		return args -> {
 			postgreSQLSystem.importFile();
 			mongoDBSystem.importFile();
+			csvToHiveImporter.importFile();
 			hiveSystem.importFile();
 		};
 	}
-
 }

@@ -119,14 +119,14 @@ public class MongoDBSystem extends DBSystem {
                 System.out.println("No data found in CSV.");
             }
 
-            for (String dbName : mongoClient.listDatabaseNames()) {
-                System.out.println("Database: " + dbName);
-            }
+//            for (String dbName : mongoClient.listDatabaseNames()) {
+//                System.out.println("Database: " + dbName);
+//            }
 
             database = mongoClient.getDatabase(databaseName);
-            for (String collName : database.listCollectionNames()) {
-                System.out.println("Collection: " + collName);
-            }
+//            for (String collName : database.listCollectionNames()) {
+//                System.out.println("Collection: " + collName);
+//            }
 
             long count = database.getCollection(collectionName).countDocuments();
             System.out.println("Documents in student_grades: " + count);
