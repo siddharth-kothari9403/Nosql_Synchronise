@@ -23,7 +23,7 @@ services:
     environment:
       POSTGRES_PASSWORD: mypassword
       POSTGRES_USER: myuser
-      POSTGRES_DB: mergemesh
+      POSTGRES_DB: student_course_grades
     ports:
       - "5432:5432"
     volumes:
