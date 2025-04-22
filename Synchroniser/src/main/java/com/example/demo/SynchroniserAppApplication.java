@@ -16,11 +16,11 @@ public class SynchroniserAppApplication {
 	}
 
 	@Bean
-	public CommandLineRunner run(PostgreSQLSystem postgreSQLSystem, MongoDBSystem mongoDBSystem, CsvToHiveImporter csvToHiveImporter, HiveSystem hiveSystem) {
+	public CommandLineRunner run(PostgreSQLSystem postgreSQLSystem, MongoDBSystem mongoDBSystem, HiveSystem hiveSystem) {
 		return args -> {
 			postgreSQLSystem.importFile();
 			mongoDBSystem.importFile();
-			csvToHiveImporter.importFile();
+			// csvToHiveImporter.importFile();
 			hiveSystem.importFile();
 		};
 	}

@@ -13,6 +13,7 @@ import javax.sql.DataSource;
 import com.opencsv.CSVReader;
 
 public class HiveSystem extends DBSystem {
+    
     private JdbcTemplate jdbcTemplate;
     private final String csvFilePath = "./data/student_course_grades.csv";
 
