@@ -1,6 +1,7 @@
 services:
   # docker exec -it hive4 beeline -u 'jdbc:hive2://localhost:10000/'
   # docker exec -it hive4 bash
+  
   hive:
     image: apache/hive:4.0.1
     container_name: hive4
@@ -14,6 +15,7 @@ services:
       - ./init_hive.hql:/opt/hive/init/init_hive.hql
       # - ./output:/opt/hive/myoutput
     restart: unless-stopped
+  
   postgres:
     container_name: postgres
     image: postgres:16.4-alpine
