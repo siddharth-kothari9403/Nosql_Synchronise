@@ -1,16 +1,17 @@
 package com.example.demo.DBRead;
 import java.io.FileReader;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import org.springframework.beans.factory.annotation.Value;
-import com.opencsv.CSVReader;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+
+import com.opencsv.CSVReader;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -31,7 +32,8 @@ public class PostgreSQLSystem extends DBSystem {
 
     public PostgreSQLSystem() throws SQLException {
         super("postgres");
-        conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/student_course_grades", "myuser", "mypassword");
+        // conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/student_course_grades", "myuser", "mypassword");
+        conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", "myuser", "mypassword");
     }
 
     @Override
