@@ -1,0 +1,44 @@
+services:
+  # docker exec -it hive4 beeline -u 'jdbc:hive2://localhost:10000/'
+  # docker exec -it hive4 bash
+  hive:
+    image: apache/hive:4.0.1
+    container_name: hive4
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    environment:
+      SERVICE_NAME: hiveserver2
+    volumes:
+      - ./data:/opt/hive/mydata
+      - ./init_hive.hql:/opt/hive/init/init_hive.hql
+      # - ./output:/opt/hive/myoutput
+    restart: unless-stopped
+  postgres:
+    container_name: postgres
+    image: postgres:16.4-alpine
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_USER: myuser
+      POSTGRES_DB: mergemesh
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: myuser
+      MONGO_INITDB_ROOT_PASSWORD: mypassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  postgres_data:
+  mongo_data:
