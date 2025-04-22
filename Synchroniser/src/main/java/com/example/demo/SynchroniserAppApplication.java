@@ -16,10 +16,11 @@ public class SynchroniserAppApplication {
 	}
 
 	@Bean
-	public CommandLineRunner run(CsvToMongoImporter csvToMongoImporter, CsvToPostgresImporter csvToPostgresImporter) {
+	public CommandLineRunner run(CsvToMongoImporter csvToMongoImporter, CsvToPostgresImporter csvToPostgresImporter, CsvToHiveImporter csvToHiveImporter) {
 		return args -> {
 			csvToMongoImporter.importFile();
 			csvToPostgresImporter.importFile();
+			csvToHiveImporter.importFile();
 		};
 	}
 

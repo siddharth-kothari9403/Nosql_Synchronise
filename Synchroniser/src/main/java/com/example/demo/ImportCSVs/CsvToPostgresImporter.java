@@ -26,7 +26,6 @@ public class CsvToPostgresImporter {
 
     public void importFile() {
 
-
         try (
                 Connection conn = DriverManager.getConnection(url, user, password);
                 CSVReader reader = new CSVReader(new FileReader(csvFilePath))
