@@ -1,37 +1,46 @@
 package com.example.demo.DBRead;
 import java.io.FileReader;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import org.springframework.beans.factory.annotation.Value;
-import com.opencsv.CSVReader;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+
+import com.mongodb.client.MongoClients;
+import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.beans.factory.annotation.Value;
+
+import com.opencsv.CSVReader;
 
 @Configuration
 @PropertySource("classpath:application.properties")
 public class PostgreSQLSystem extends DBSystem {
     private Connection conn;
 
-    private String csvFilePath = "./data/student_course_grades.csv";
+    @Value("${csv.file.path}")
+    private String csvFilePath;
 
-    // @Value("${postgres.url}")
-    // private String url;
+     @Value("${postgres.url}")
+     private String url;
 
-    // @Value("${postgres.user}")
-    // private String user;
+     @Value("${postgres.user}")
+     private String user;
 
-    // @Value("${postgres.password}")
-    // private String password;
+     @Value("${postgres.password}")
+     private String password;
 
+     public PostgreSQLSystem() throws SQLException {
+         super("postgres");
+     }
 
-    public PostgreSQLSystem() throws SQLException {
-        super("postgres");
-        conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/student_course_grades", "myuser", "mypassword");
+    @PostConstruct
+    public void initPostgres() throws SQLException {
+        conn = DriverManager.getConnection(url, user, password);
+        //conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", "myuser", "mypassword");
     }
 
     @Override

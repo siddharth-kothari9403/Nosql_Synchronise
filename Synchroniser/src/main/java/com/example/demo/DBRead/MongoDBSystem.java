@@ -1,21 +1,20 @@
 package com.example.demo.DBRead;
 import java.io.FileReader;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Value;
-import java.util.List;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
 import com.opencsv.CSVReader;
-import com.mongodb.client.MongoDatabase;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -37,8 +36,6 @@ public class MongoDBSystem extends DBSystem {
      @Value("${csv.file.path}")
      private String csvFilePath;
 
-     //    private String csvFilePath = "./data/student_course_grades.csv";
-
     // @Value("${mongo.database}")
     private String databaseName = "student_course_grades";
 
@@ -47,24 +44,11 @@ public class MongoDBSystem extends DBSystem {
     
     public MongoDBSystem() {
         super("mongo");
-//        try {
-////            String connectionString = String.format("mongodb://%s:%s@localhost:%d", "myuser", "mypassword", 27017);
-//            String connectionString = String.format("mongodb://%s:%s@localhost:%d", username, password, port);
-//            // Initialize MongoDB client and collection
-//            mongoClient = MongoClients.create(connectionString);
-//            database = mongoClient.getDatabase("student_course_grades");
-//            collection = database.getCollection("grades");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            throw new RuntimeException("Failed to initialize MongoDB connection", e);
-//        }
     }
 
     @PostConstruct
     public void initMongo() {
         try {
-//            String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8);
-//            String encodedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8);
             String connectionString = String.format("mongodb://%s:%s@localhost:%d", username, password, port);
 
             mongoClient = MongoClients.create(connectionString);

@@ -1,6 +1,7 @@
 package com.example.demo.DBRead;
 
 import com.opencsv.CSVReader;
+import jakarta.annotation.PostConstruct;
 import org.apache.commons.dbcp.BasicDataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -14,17 +15,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
+
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 @Configuration
 @PropertySource("classpath:application.properties")
 public class HiveSystem extends DBSystem {
-    private Connection conn;
 
     @Value("${csv.file.path}")
     private String csvFilePath;
@@ -32,67 +29,68 @@ public class HiveSystem extends DBSystem {
     @Value("${hive.url}")
     private String url;
 
-    Path tempCsvFile = Paths.get("data/student_grades_noheader.csv").toAbsolutePath();
+    private JdbcTemplate jdbcTemplate;
+
+    public DataSource getHiveDataSource() {
+        BasicDataSource dataSource = new BasicDataSource();
+        dataSource.setUrl(url);
+        dataSource.setDriverClassName("org.apache.hive.jdbc.HiveDriver");
+        return dataSource;
+    }
 
     public HiveSystem() throws SQLException {
         super("hive");
-        String url = "jdbc:hive2://localhost:10000/default";
-        conn = DriverManager.getConnection(url, "youruser", "yourpass");
     }
+
+    @PostConstruct
+    public void initHive(){
+        this.jdbcTemplate = new JdbcTemplate(getHiveDataSource());
+    }
+
+    Path tempCsvFile = Paths.get("data/student_grades_noheader.csv").toAbsolutePath();
 
     @Override
     public String readGrade(String studentId, String courseId) {
         try {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT grade FROM grades WHERE student_id = '" + studentId + "' AND course_id = '" + courseId + "'");
-            if (rs.next()) return rs.getString("grade");
-        } catch (SQLException e) {
+            String sql = "SELECT grade FROM grades WHERE student_id = ? AND course_id = ?";
+            return jdbcTemplate.queryForObject(sql, new Object[]{studentId, courseId}, String.class);
+        } catch (Exception e) {
             e.printStackTrace();
+            return "Not Found";
         }
-        return "Not Found";
     }
 
     @Override
-    public void updateGrade(String studentId,String courseId,String grade) {
+    public void updateGrade(String studentId, String courseId, String grade) {
         try {
-            Statement stmt = conn.createStatement();
-            stmt.executeUpdate("INSERT INTO grades(student_id, course_id, grade) VALUES('" + studentId + "', '" + courseId + "', '" + grade + "') ON DUPLICATE KEY UPDATE grade = '" + grade + "'");
+            // Try to update existing record
+            String updateSQL = "UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?";
+            int updated = jdbcTemplate.update(updateSQL, grade, studentId, courseId);
+
+            // If no rows were updated, insert a new one
+            if (updated == 0) {
+                String insertSQL = "INSERT INTO grades(student_id, course_id, grade) VALUES(?, ?, ?)";
+                jdbcTemplate.update(insertSQL, studentId, courseId, grade);
+            }
+
             logOperation("update", studentId, courseId, grade);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
-            
     }
 
     @Override
     public void merge(String fromSystem) {
         for (Operation op : oplogs.getOrDefault(fromSystem, new ArrayList<>())) {
             if (op.opType.equals("update")) {
-                updateGrade(op.studentId,op.courseId,op.value);
-                logOperation("merge_update", op.studentId, op.courseId,op.value);
+                updateGrade(op.studentId, op.courseId, op.value);
+                logOperation("merge_update", op.studentId, op.courseId, op.value);
             }
         }
     }
 
 
-
-    public DataSource getHiveDataSource() {
-
-        BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setUrl(url);
-        dataSource.setDriverClassName("org.apache.hive.jdbc.HiveDriver");
-//        dataSource.setUsername(user);
-//        dataSource.setPassword(password);
-
-        return dataSource;
-    }
-
-    public JdbcTemplate getJDBCTemplate() throws IOException {
-        return new JdbcTemplate(getHiveDataSource());
-    }
-
     public void importFile() throws IOException {
-        JdbcTemplate jdbcTemplate = getJDBCTemplate();
         try (
                 CSVReader reader = new CSVReader(new FileReader(csvFilePath));
                 BufferedWriter writer = Files.newBufferedWriter(tempCsvFile);
