@@ -1,11 +1,6 @@
 package com.example.demo.DBRead;
 
-import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -16,8 +11,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import com.opencsv.CSVReader;
 
 import jakarta.annotation.PostConstruct;
 
@@ -49,13 +42,13 @@ public class HiveSystem extends DBSystem {
         this.jdbcTemplate = new JdbcTemplate(getHiveDataSource());
     }
 
-    Path tempCsvFile = Paths.get("data/student_grades_noheader.csv").toAbsolutePath();
+    // Path tempCsvFile = Paths.get("data/student_grades_noheader.csv").toAbsolutePath();
 
     @Override
     public String readGrade(String studentId, String courseId) {
         try {
             String sql = "SELECT grade FROM grades WHERE student_id = ? AND course_id = ?";
-            return jdbcTemplate.queryForObject(sql, String.class, studentId, courseId);
+            return jdbcTemplate.queryForObject(sql, new Object[]{studentId, courseId}, String.class);
         } catch (Exception e) {
             e.printStackTrace();
             return "Not Found";
@@ -93,10 +86,7 @@ public class HiveSystem extends DBSystem {
 
 
     public void importFile() throws IOException {
-        try (
-                CSVReader reader = new CSVReader(new FileReader(csvFilePath));
-                BufferedWriter writer = Files.newBufferedWriter(tempCsvFile);
-        ) {
+        try {
             // Drop the table if it exists
             String dropTableSQL = "DROP TABLE IF EXISTS grades";
             jdbcTemplate.execute(dropTableSQL);
@@ -113,31 +103,10 @@ public class HiveSystem extends DBSystem {
             jdbcTemplate.execute(createTableSQL);
             System.out.println("Created new table.");
 
-            // Skip header row
-            String[] headers = reader.readNext();
-            if (headers == null) {
-                System.out.println("CSV file is empty.");
-                return;
-            }
-
-            // Write the remaining rows to the new temporary CSV file
-            String[] line;
-            int rowCount = 0;
-            while ((line = reader.readNext()) != null) {
-                writer.write(String.join(",", line));
-                writer.newLine();
-                rowCount++;
-            }
-
             // Load data from the new CSV (without header)
             String loadDataSQL = "LOAD DATA LOCAL INPATH '/opt/hive/mydata/student_grades_noheader.csv' INTO TABLE grades";
             jdbcTemplate.execute(loadDataSQL);
             System.out.println("Loaded CSV data into Hive.");
-
-            // Clean up temporary file
-            Files.deleteIfExists(tempCsvFile);
-
-            System.out.println("Inserted " + rowCount + " rows into Hive.");
 
         } catch (Exception e) {
             e.printStackTrace();
