@@ -39,34 +39,40 @@ public class PostgreSQLSystem extends DBSystem {
 
     @PostConstruct
     public void initPostgres() throws SQLException {
-        // conn = DriverManager.getConnection(url, user, password);
-        conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", user, password);
+         conn = DriverManager.getConnection(url, user, password);
+//        conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", user, password);
     }
 
     @Override
     public String readGrade(String studentId, String courseId) {
+        String returnString = "Not Found";
         try {
             PreparedStatement stmt = conn.prepareStatement("SELECT grade FROM grades WHERE student_id = ? AND course_id = ?");
             stmt.setString(1, studentId);
             stmt.setString(2, courseId);
             ResultSet rs = stmt.executeQuery();
+
+
             if (rs.next()) {
-                return rs.getString("grade");
+                returnString = rs.getString("grade");
+                logOperation("read", studentId, courseId, returnString);
+            }else{
+                logOperation("read", studentId, courseId, "Not Found");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return "Not Found";
+
+        return returnString;
     }
 
     @Override
     public void updateGrade(String studentId,String couseId,String grade) {
         try {
-            PreparedStatement stmt = conn.prepareStatement("INSERT INTO grades(student_id, course_id, grade) VALUES(?, ?, ?) ON CONFLICT (student_id, course_id) DO UPDATE SET grade = ?");
-            stmt.setString(1, studentId);
-            stmt.setString(2, couseId);
-            stmt.setString(3, grade);
-            stmt.setString(4, grade);
+            PreparedStatement stmt = conn.prepareStatement("UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?");
+            stmt.setString(1, grade);
+            stmt.setString(2, studentId);
+            stmt.setString(3, couseId);
             stmt.executeUpdate();
             logOperation("update", studentId, couseId, grade);
         } catch (SQLException e) {

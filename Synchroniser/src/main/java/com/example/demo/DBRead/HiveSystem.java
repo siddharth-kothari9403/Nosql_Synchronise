@@ -3,6 +3,7 @@ package com.example.demo.DBRead;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -46,24 +47,24 @@ public class HiveSystem extends DBSystem {
 
     @Override
     public String readGrade(String studentId, String courseId) {
-        try {
-            String sql = "SELECT grade FROM grades WHERE student_id = ? AND course_id = ?";
-            return jdbcTemplate.queryForObject(sql, new Object[]{studentId, courseId}, String.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Not Found";
-        }
+        String sql = "SELECT grade FROM grades WHERE student_id = ? AND course_id = ?";
+        List<String> results = jdbcTemplate.query(
+                sql,
+                new Object[]{studentId, courseId},
+                (rs, rowNum) -> rs.getString("grade")
+        );
+
+        String returnString = results.isEmpty() ? "Not Found" : results.get(0);
+        logOperation("read", studentId, courseId, returnString);
+        return returnString;
     }
 
     @Override
     public void updateGrade(String studentId, String courseId, String grade) {
         try {
             // Try to update existing record
-
-            String deleteSQL = "DELETE FROM grades WHERE student_id = ? AND course_id = ?";
-            jdbcTemplate.update(deleteSQL, studentId, courseId);
-            String insertSQL = "INSERT INTO grades(student_id, course_id, grade) VALUES(?, ?, ?)";
-            jdbcTemplate.update(insertSQL, studentId, courseId, grade);
+            String updateSQL = "UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?";
+            jdbcTemplate.update(updateSQL, grade, studentId, courseId);
 
             // String updateSQL = "UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?";
             // int updated = jdbcTemplate.update(updateSQL, grade, studentId, courseId);

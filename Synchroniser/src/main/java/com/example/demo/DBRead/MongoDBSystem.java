@@ -63,21 +63,28 @@ public class MongoDBSystem extends DBSystem {
     }
 
     @Override
-    public String readGrade(String studentId,String courseId) {
-        Document doc = collection.find(new Document("student_id", studentId)).first();
-        if (doc != null) {
-            return doc.getString("grade");
-        }
-        return "Not Found";
+    public String readGrade(String studentId, String courseId) {
+        Document query = new Document("student_id", studentId)
+                .append("course_id", courseId);
+
+        Document doc = collection.find(query).first();
+        String returnString = (doc == null) ? "Not Found" : doc.getString("grade");
+        logOperation("read", studentId, courseId, returnString);
+        return returnString;
     }
 
     @Override
-    public void updateGrade(String studentId,String couseId,String grade) {
-        Document doc = new Document("student_id", studentId)
-                .append("course_id", couseId)
+    public void updateGrade(String studentId, String courseId, String grade) {
+        // If the document exists, update it
+        Document updatedDoc = new Document("student_id", studentId)
+                .append("course_id", courseId)
                 .append("grade", grade);
-        collection.replaceOne(new Document("student_id", studentId), doc, new ReplaceOptions().upsert(true));
-        logOperation("update", studentId, couseId, grade);
+        collection.replaceOne(
+                new Document("student_id", studentId).append("course_id", courseId),
+                updatedDoc,
+                new ReplaceOptions().upsert(false) // Ensure no upsert happens
+        );
+        logOperation("update", studentId, courseId, grade);
     }
 
     @Override
@@ -105,6 +112,8 @@ public class MongoDBSystem extends DBSystem {
                 System.out.println("CSV file is empty.");
                 return;
             }
+
+            headers = new String[]{"student_id", "course_id", "roll_no", "email_id", "grade"};
 
             String[] line;
             List<Document> documents = new ArrayList<>();

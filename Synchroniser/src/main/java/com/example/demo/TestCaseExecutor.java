@@ -23,7 +23,7 @@ public class TestCaseExecutor {
     @Autowired
     private MongoDBSystem mongoDBSystem;
 
-    private static final Pattern setPattern = Pattern.compile("(HIVE|SQL|MONGO)\\.SET\\(\\( *([^,]+) *, *([^\\)]+) *\\) *, *([A-F]) *\\)");
+    private static final Pattern setPattern = Pattern.compile("(HIVE|SQL|MONGO)\\.SET\\(\\( *([^,]+) *, *([^\\)]+) *\\) *, *([A-F][+-]?) *\\)");
     private static final Pattern getPattern = Pattern.compile("(HIVE|SQL|MONGO)\\.GET\\( *([^,]+) *, *([^\\)]+) *\\)");
     private static final Pattern mergePattern = Pattern.compile("(HIVE|SQL|MONGO)\\.MERGE\\((HIVE|SQL|MONGO)\\)");
 
