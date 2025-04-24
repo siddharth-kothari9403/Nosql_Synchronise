@@ -1,1 +1,0 @@
-docker exec -i hive4 beeline -u 'jdbc:hive2://localhost:10000/' -f /opt/hive/init/init_hive.hql
