@@ -13,7 +13,6 @@ services:
     volumes:
       - ./data:/opt/hive/mydata
       - ./init_hive.hql:/opt/hive/init/init_hive.hql
-      # - ./output:/opt/hive/myoutput
     restart: unless-stopped
   
   postgres:

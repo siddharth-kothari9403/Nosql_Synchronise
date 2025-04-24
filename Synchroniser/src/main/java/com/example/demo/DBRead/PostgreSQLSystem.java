@@ -91,47 +91,53 @@ public class PostgreSQLSystem extends DBSystem {
         ) {
             Statement stmtDDL = conn.createStatement();
 
-            // Drop the table if it exists
-            stmtDDL.executeUpdate("DROP TABLE IF EXISTS grades");
+        // Drop the table if it exists
+        stmtDDL.executeUpdate("DROP TABLE IF EXISTS grades");
 
-            // Create the table
-            stmtDDL.executeUpdate(
-                    "CREATE TABLE grades (" +
-                            "student_id VARCHAR(50), " +
-                            "course_id VARCHAR(50), " +
-                            "roll_no VARCHAR(50), " +
-                            "email_id VARCHAR(100), " +
-                            "grade VARCHAR(5))"
-            );
+        // Create the table
+        stmtDDL.executeUpdate(
+            "CREATE TABLE grades (" +
+                "student_id VARCHAR(50), " +
+                "course_id VARCHAR(50), " +
+                "roll_no VARCHAR(50), " +
+                "email_id VARCHAR(100), " +
+                "grade VARCHAR(5))"
+        );
 
-            String[] headers = reader.readNext(); // Skip header
-            if (headers == null) {
-                System.out.println("CSV file is empty.");
-                return;
+        // Add unique constraint for ON CONFLICT clause
+        stmtDDL.executeUpdate(
+            "ALTER TABLE grades ADD CONSTRAINT unique_student_course UNIQUE (student_id, course_id)"
+        );
+
+        // Skip header
+        String[] headers = reader.readNext();
+        if (headers == null) {
+            System.out.println("CSV file is empty.");
+            return;
+        }
+
+        String insertSQL = "INSERT INTO grades (student_id, course_id, roll_no, email_id, grade) VALUES (?, ?, ?, ?, ?)";
+        PreparedStatement stmtInsert = conn.prepareStatement(insertSQL);
+
+        String[] line;
+        int count = 0;
+
+        while ((line = reader.readNext()) != null) {
+            stmtInsert.setString(1, line[0]);
+            stmtInsert.setString(2, line[1]);
+            stmtInsert.setString(3, line[2]);
+            stmtInsert.setString(4, line[3]);
+            stmtInsert.setString(5, line[4]);
+            stmtInsert.addBatch();
+            count++;
+
+            if (count % 100 == 0) {
+                stmtInsert.executeBatch();
             }
+        }
 
-            String insertSQL = "INSERT INTO grades (student_id, course_id, roll_no, email_id, grade) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement stmtInsert = conn.prepareStatement(insertSQL);
-
-            String[] line;
-            int count = 0;
-
-            while ((line = reader.readNext()) != null) {
-                stmtInsert.setString(1, line[0]);
-                stmtInsert.setString(2, line[1]);
-                stmtInsert.setString(3, line[2]);
-                stmtInsert.setString(4, line[3]);
-                stmtInsert.setString(5, line[4]);
-                stmtInsert.addBatch();
-                count++;
-
-                if (count % 100 == 0) {
-                    stmtInsert.executeBatch();
-                }
-            }
-
-            stmtInsert.executeBatch(); // Final batch
-            System.out.println("Inserted " + count + " rows into PostgreSQL.");
+        stmtInsert.executeBatch(); // Final batch
+        System.out.println("Inserted " + count + " rows into PostgreSQL.");
 
         } catch (Exception e) {
             e.printStackTrace();
