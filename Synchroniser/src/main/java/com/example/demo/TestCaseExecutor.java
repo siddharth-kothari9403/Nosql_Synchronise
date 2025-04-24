@@ -6,12 +6,14 @@ import com.example.demo.DBRead.MongoDBSystem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Component
 public class TestCaseExecutor {
     @Autowired
     private HiveSystem hiveSystem;
@@ -24,7 +26,6 @@ public class TestCaseExecutor {
     private static final Pattern getPattern = Pattern.compile("(HIVE|SQL|MONGO)\\.GET\\( *([^,]+) *, *([^\\)]+) *\\)");
     private static final Pattern mergePattern = Pattern.compile("(HIVE|SQL|MONGO)\\.MERGE\\((HIVE|SQL|MONGO)\\)");
 
-    @EventListener(ApplicationReadyEvent.class)
     public void executeTestCase() throws Exception {
         BufferedReader reader = new BufferedReader(new FileReader("testcase.in"));
         String line;

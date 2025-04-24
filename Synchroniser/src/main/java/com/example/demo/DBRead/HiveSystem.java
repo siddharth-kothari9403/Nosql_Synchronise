@@ -53,7 +53,7 @@ public class HiveSystem extends DBSystem {
     public String readGrade(String studentId, String courseId) {
         try {
             String sql = "SELECT grade FROM grades WHERE student_id = ? AND course_id = ?";
-            return jdbcTemplate.queryForObject(sql, new Object[]{studentId, courseId}, String.class);
+            return jdbcTemplate.queryForObject(sql, String.class, studentId, courseId);
         } catch (Exception e) {
             e.printStackTrace();
             return "Not Found";
@@ -96,12 +96,12 @@ public class HiveSystem extends DBSystem {
                 BufferedWriter writer = Files.newBufferedWriter(tempCsvFile);
         ) {
             // Drop the table if it exists
-            String dropTableSQL = "DROP TABLE IF EXISTS student_grades";
+            String dropTableSQL = "DROP TABLE IF EXISTS grades";
             jdbcTemplate.execute(dropTableSQL);
             System.out.println("Dropped existing table (if any).");
 
             // Create the table
-            String createTableSQL = "CREATE TABLE student_grades (" +
+            String createTableSQL = "CREATE TABLE grades (" +
                     "student_id STRING, " +
                     "course_id STRING, " +
                     "roll_no STRING, " +
