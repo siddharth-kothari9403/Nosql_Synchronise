@@ -1,11 +1,12 @@
 package com.example.demo;
-import com.example.demo.DBRead.HiveSystem;
-import com.example.demo.DBRead.MongoDBSystem;
-import com.example.demo.DBRead.PostgreSQLSystem;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+
+import com.example.demo.DBRead.HiveSystem;
+import com.example.demo.DBRead.MongoDBSystem;
+import com.example.demo.DBRead.PostgreSQLSystem;
 
 @SpringBootApplication
 public class SynchroniserAppApplication {
@@ -20,6 +21,7 @@ public class SynchroniserAppApplication {
 			postgreSQLSystem.importFile();
 			mongoDBSystem.importFile();
 			hiveSystem.importFile();
+			testCaseExecutor.executeTestCase();
 		};
 	}
 }

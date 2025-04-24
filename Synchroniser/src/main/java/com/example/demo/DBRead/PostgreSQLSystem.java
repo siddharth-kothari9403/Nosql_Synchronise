@@ -8,13 +8,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-import com.mongodb.client.MongoClients;
-import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.opencsv.CSVReader;
+
+import jakarta.annotation.PostConstruct;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -39,7 +39,8 @@ public class PostgreSQLSystem extends DBSystem {
 
     @PostConstruct
     public void initPostgres() throws SQLException {
-        conn = DriverManager.getConnection(url, user, password);
+        // conn = DriverManager.getConnection(url, user, password);
+        conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", user, password);
     }
 
     @Override

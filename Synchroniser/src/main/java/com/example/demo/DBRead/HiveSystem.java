@@ -1,23 +1,25 @@
 package com.example.demo.DBRead;
 
-import com.opencsv.CSVReader;
-import jakarta.annotation.PostConstruct;
-import org.apache.commons.dbcp.BasicDataSource;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import javax.sql.DataSource;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
+
+import javax.sql.DataSource;
+
+import org.apache.commons.dbcp.BasicDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.opencsv.CSVReader;
+
+import jakarta.annotation.PostConstruct;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -128,7 +130,7 @@ public class HiveSystem extends DBSystem {
             }
 
             // Load data from the new CSV (without header)
-            String loadDataSQL = "LOAD DATA LOCAL INPATH '/opt/hive/mydata/student_grades_noheader.csv' INTO TABLE student_grades";
+            String loadDataSQL = "LOAD DATA LOCAL INPATH '/opt/hive/mydata/student_grades_noheader.csv' INTO TABLE grades";
             jdbcTemplate.execute(loadDataSQL);
             System.out.println("Loaded CSV data into Hive.");
 

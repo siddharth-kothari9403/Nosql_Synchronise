@@ -1,17 +1,18 @@
 package com.example.demo;
 
-import com.example.demo.DBRead.HiveSystem;
-import com.example.demo.DBRead.PostgreSQLSystem;
-import com.example.demo.DBRead.MongoDBSystem;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+
+import com.example.demo.DBRead.HiveSystem;
+import com.example.demo.DBRead.MongoDBSystem;
+import com.example.demo.DBRead.PostgreSQLSystem;
 
 @Component
 public class TestCaseExecutor {
@@ -27,7 +28,10 @@ public class TestCaseExecutor {
     private static final Pattern mergePattern = Pattern.compile("(HIVE|SQL|MONGO)\\.MERGE\\((HIVE|SQL|MONGO)\\)");
 
     public void executeTestCase() throws Exception {
-        BufferedReader reader = new BufferedReader(new FileReader("testcase.in"));
+        ClassPathResource resource = new ClassPathResource("testcase.in");
+        InputStream inputStream = resource.getInputStream();
+        // BufferedReader reader = new BufferedReader(new FileReader("testcase.in"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         String line;
 
         while ((line = reader.readLine()) != null) {
