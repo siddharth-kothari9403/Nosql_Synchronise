@@ -40,7 +40,6 @@ public class PostgreSQLSystem extends DBSystem {
     @PostConstruct
     public void initPostgres() throws SQLException {
         conn = DriverManager.getConnection(url, user, password);
-        //conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", "myuser", "mypassword");
     }
 
     @Override
@@ -92,11 +91,11 @@ public class PostgreSQLSystem extends DBSystem {
             Statement stmtDDL = conn.createStatement();
 
             // Drop the table if it exists
-            stmtDDL.executeUpdate("DROP TABLE IF EXISTS student_grades");
+            stmtDDL.executeUpdate("DROP TABLE IF EXISTS grades");
 
             // Create the table
             stmtDDL.executeUpdate(
-                    "CREATE TABLE student_grades (" +
+                    "CREATE TABLE grades (" +
                             "student_id VARCHAR(50), " +
                             "course_id VARCHAR(50), " +
                             "roll_no VARCHAR(50), " +
@@ -110,7 +109,7 @@ public class PostgreSQLSystem extends DBSystem {
                 return;
             }
 
-            String insertSQL = "INSERT INTO student_grades (student_id, course_id, roll_no, email_id, grade) VALUES (?, ?, ?, ?, ?)";
+            String insertSQL = "INSERT INTO grades (student_id, course_id, roll_no, email_id, grade) VALUES (?, ?, ?, ?, ?)";
             PreparedStatement stmtInsert = conn.prepareStatement(insertSQL);
 
             String[] line;
