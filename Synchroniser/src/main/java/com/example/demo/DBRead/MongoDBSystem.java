@@ -2,13 +2,14 @@ package com.example.demo.DBRead;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.nio.file.*;
-import jakarta.annotation.PostConstruct;
+
 import org.bson.Document;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
@@ -18,7 +19,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.ReplaceOptions;
 import com.opencsv.CSVReader;
-import org.springframework.beans.factory.annotation.Value;
+
+import jakarta.annotation.PostConstruct;
 
 @Configuration
 @PropertySource("classpath:application.properties")
@@ -72,7 +74,7 @@ public class MongoDBSystem extends DBSystem {
         String returnString = (doc == null) ? "Not Found" : doc.getString("grade");
 
         logOperation("read", studentId, courseId, returnString);
-        logAction("read", studentId, courseId, returnString);
+        logAction("read", studentId, courseId, returnString,"mongo");
 
         return returnString;
     }
@@ -90,7 +92,7 @@ public class MongoDBSystem extends DBSystem {
         );
 
         logOperation("update", studentId, courseId, grade);
-        logAction("update", studentId, courseId, grade);
+        logAction("update", studentId, courseId, grade,"mongo");
     }
 
     @Override
@@ -132,13 +134,13 @@ public class MongoDBSystem extends DBSystem {
                                 new ReplaceOptions().upsert(false)
                         );
     
-                        logAction("update", studentId, courseId, grade, timestamp1);
+                        logAction("update", studentId, courseId, grade,"mongo",timestamp1);
                     }
                     
                 }
             }   
         }catch (IOException e) {
-            System.out.println("Error reading hive log file: " + getStackTrace(e));
+            System.out.println("Error reading log file: " + getStackTrace(e));
         }
         writeToLogFile("MONGO MERGE " + fromSystem, fromSystem.toLowerCase() + "-log.txt");
     }
@@ -184,16 +186,16 @@ public class MongoDBSystem extends DBSystem {
         }
     }
 
-    private void logAction(String action, String studentId, String courseId, String grade) {
-        String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
-                action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message, "mongo-log.txt");
-    }
+    // private void logAction(String action, String studentId, String courseId, String grade) {
+    //     String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
+    //             action.toUpperCase(), studentId, courseId, grade);
+    //     writeToLogFile(message, "mongo-log.txt");
+    // }
 
-    private void logAction(String action, String studentId, String courseId, String grade, String timeStamp) {
-        String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
-                action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message, "mongo-log.txt", timeStamp);
-    }
+    // private void logAction(String action, String studentId, String courseId, String grade, String timeStamp) {
+    //     String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
+    //             action.toUpperCase(), studentId, courseId, grade);
+    //     writeToLogFile(message, "mongo-log.txt", timeStamp);
+    // }
 
 }

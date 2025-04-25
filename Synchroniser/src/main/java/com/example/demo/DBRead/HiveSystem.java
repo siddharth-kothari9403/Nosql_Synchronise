@@ -1,8 +1,10 @@
 package com.example.demo.DBRead;
-
+import java.nio.file.Files;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +58,7 @@ public class HiveSystem extends DBSystem {
 
         String returnString = results.isEmpty() ? "Not Found" : results.get(0);
         logOperation("read", studentId, courseId, returnString);
-        logAction("read", studentId, courseId, returnString);
+        logAction("read", studentId, courseId, returnString,"hive");
         return returnString;
     }
 
@@ -67,7 +69,7 @@ public class HiveSystem extends DBSystem {
             jdbcTemplate.update(updateSQL, grade, studentId, courseId);
 
             logOperation("update", studentId, courseId, grade);
-            logAction("update", studentId, courseId, grade);
+            logAction("update", studentId, courseId, grade, "hive");
         } catch (Exception e) {
             System.out.println(getStackTrace(e));
         }
@@ -75,7 +77,40 @@ public class HiveSystem extends DBSystem {
 
     @Override
     public void merge(String fromSystem) {
-        
+        writeToLogFile(" HIVE MERGE "+ fromSystem, "hive-log.txt");
+        Path logPath = Paths.get("src/main/resources/" + fromSystem.toLowerCase() + "-log.txt");
+        try{
+            List<String> lines = Files.readAllLines(logPath);
+            Integer lastLineInd = -1;
+            for (int i = lines.size() - 1; i >= 0; i--) {
+                if (lines.get(i).contains("HIVE MERGE " + fromSystem.toUpperCase())) {
+                    lastLineInd = i;
+                    break;
+                }
+            }
+            for(Integer i = lastLineInd + 1; i < lines.size(); i++) {
+                String line = lines.get(i);
+                if (line.contains("UPDATE")) {
+                    String[] parts = line.split(" - ");
+                    String timestamp1 = parts[0].trim();
+                    String[] details = parts[2].split(", ");
+                    String studentId = details[0].split("=")[1].trim();
+                    String courseId = details[1].split("=")[1].trim();
+                    String grade = details[2].split("=")[1].trim();
+
+                    String timeStamp2 = getLatestUpdateTimestamp(studentId, courseId);
+                    if (timeStamp2 == null || timestamp1.compareTo(timeStamp2) > 0) {
+                        String updateSQL = "UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?";
+                        jdbcTemplate.update(updateSQL, grade, studentId, courseId);
+                        logAction("update", studentId, courseId, grade, "hive", timestamp1);
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            System.out.println(getStackTrace(e));
+        }
+        writeToLogFile(" HIVE MERGE "+ fromSystem, fromSystem.toLowerCase() + "-log.txt");
     }
 
     public void importFile() throws IOException {
@@ -132,9 +167,9 @@ public class HiveSystem extends DBSystem {
         }
     }
 
-    private void logAction(String action, String studentId, String courseId, String grade) {
-        String message = String.format("%s - studentId=%s, courseId=%s, grade=%s", 
-                                       action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message, "hive-log.txt");
-    }
+    // private void logAction(String action, String studentId, String courseId, String grade) {
+    //     String message = String.format("%s - studentId=%s, courseId=%s, grade=%s", 
+    //                                    action.toUpperCase(), studentId, courseId, grade);
+    //     writeToLogFile(message, "hive-log.txt");
+    // }
 }
