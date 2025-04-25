@@ -3,10 +3,6 @@ package com.example.demo.DBRead;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,19 +69,13 @@ public class HiveSystem extends DBSystem {
             logOperation("update", studentId, courseId, grade);
             logAction("update", studentId, courseId, grade);
         } catch (Exception e) {
-            writeToLogFile("Error during updateGrade: " + getStackTrace(e));
+            System.out.println(getStackTrace(e));
         }
     }
 
     @Override
     public void merge(String fromSystem) {
-        for (Operation op : oplogs.getOrDefault(fromSystem, new ArrayList<>())) {
-            if (op.opType.equals("update")) {
-                updateGrade(op.studentId, op.courseId, op.value);
-                logOperation("merge_update", op.studentId, op.courseId, op.value);
-                logAction("merge_update", op.studentId, op.courseId, op.value);
-            }
-        }
+        
     }
 
     public void importFile() throws IOException {
@@ -145,26 +135,6 @@ public class HiveSystem extends DBSystem {
     private void logAction(String action, String studentId, String courseId, String grade) {
         String message = String.format("%s - studentId=%s, courseId=%s, grade=%s", 
                                        action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message);
-    }
-
-    private void writeToLogFile(String message) {
-        try {
-            Path logPath = Paths.get("src/main/resources/hive-log.txt");
-            Files.write(
-                logPath,
-                (java.time.LocalDateTime.now() + " - " + message + System.lineSeparator()).getBytes(),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.APPEND
-            );
-        } catch (IOException ex) {
-            ex.printStackTrace(); // fallback logging
-        }
-    }
-
-    private String getStackTrace(Exception e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
+        writeToLogFile(message, "hive-log.txt");
     }
 }
