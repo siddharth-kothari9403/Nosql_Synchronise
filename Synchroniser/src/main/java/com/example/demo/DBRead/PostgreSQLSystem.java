@@ -1,11 +1,14 @@
 package com.example.demo.DBRead;
+
 import java.io.FileReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.sql.*;
 import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -24,23 +27,22 @@ public class PostgreSQLSystem extends DBSystem {
     @Value("${csv.file.path}")
     private String csvFilePath;
 
-     @Value("${postgres.url}")
-     private String url;
+    @Value("${postgres.url}")
+    private String url;
 
-     @Value("${postgres.user}")
-     private String user;
+    @Value("${postgres.user}")
+    private String user;
 
-     @Value("${postgres.password}")
-     private String password;
+    @Value("${postgres.password}")
+    private String password;
 
-     public PostgreSQLSystem() throws SQLException {
-         super("postgres");
-     }
+    public PostgreSQLSystem() throws SQLException {
+        super("postgres");
+    }
 
     @PostConstruct
     public void initPostgres() throws SQLException {
-         conn = DriverManager.getConnection(url, user, password);
-//        conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", user, password);
+        conn = DriverManager.getConnection(url, user, password);
     }
 
     @Override
@@ -52,31 +54,32 @@ public class PostgreSQLSystem extends DBSystem {
             stmt.setString(2, courseId);
             ResultSet rs = stmt.executeQuery();
 
-
             if (rs.next()) {
                 returnString = rs.getString("grade");
-                logOperation("read", studentId, courseId, returnString);
-            }else{
-                logOperation("read", studentId, courseId, "Not Found");
             }
+
+            logOperation("read", studentId, courseId, returnString);
+            logAction("read", studentId, courseId, returnString);
         } catch (SQLException e) {
-            e.printStackTrace();
+            writeToLogFile("Error during readGrade: " + getStackTrace(e));
         }
 
         return returnString;
     }
 
     @Override
-    public void updateGrade(String studentId,String couseId,String grade) {
+    public void updateGrade(String studentId, String courseId, String grade) {
         try {
             PreparedStatement stmt = conn.prepareStatement("UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?");
             stmt.setString(1, grade);
             stmt.setString(2, studentId);
-            stmt.setString(3, couseId);
+            stmt.setString(3, courseId);
             stmt.executeUpdate();
-            logOperation("update", studentId, couseId, grade);
+
+            logOperation("update", studentId, courseId, grade);
+            logAction("update", studentId, courseId, grade);
         } catch (SQLException e) {
-            e.printStackTrace();
+            writeToLogFile("Error during updateGrade: " + getStackTrace(e));
         }
     }
 
@@ -84,69 +87,88 @@ public class PostgreSQLSystem extends DBSystem {
     public void merge(String fromSystem) {
         for (Operation op : oplogs.getOrDefault(fromSystem, new ArrayList<>())) {
             if (op.opType.equals("update")) {
-                updateGrade(op.studentId,op.courseId,op.value);
-                logOperation("merge_update", op.studentId, op.courseId,op.value);
+                updateGrade(op.studentId, op.courseId, op.value);
+                logOperation("merge_update", op.studentId, op.courseId, op.value);
+                logAction("merge_update", op.studentId, op.courseId, op.value);
             }
         }
     }
 
     public void importFile() {
-
-        try (
-                CSVReader reader = new CSVReader(new FileReader(csvFilePath))
-        ) {
+        try (CSVReader reader = new CSVReader(new FileReader(csvFilePath))) {
             Statement stmtDDL = conn.createStatement();
 
-        // Drop the table if it exists
-        stmtDDL.executeUpdate("DROP TABLE IF EXISTS grades");
+            stmtDDL.executeUpdate("DROP TABLE IF EXISTS grades");
 
-        // Create the table
-        stmtDDL.executeUpdate(
-            "CREATE TABLE grades (" +
-                "student_id VARCHAR(50), " +
-                "course_id VARCHAR(50), " +
-                "roll_no VARCHAR(50), " +
-                "email_id VARCHAR(100), " +
-                "grade VARCHAR(5))"
-        );
+            stmtDDL.executeUpdate(
+                    "CREATE TABLE grades (" +
+                            "student_id VARCHAR(50), " +
+                            "course_id VARCHAR(50), " +
+                            "roll_no VARCHAR(50), " +
+                            "email_id VARCHAR(100), " +
+                            "grade VARCHAR(5))"
+            );
 
-        // Add unique constraint for ON CONFLICT clause
-        stmtDDL.executeUpdate(
-            "ALTER TABLE grades ADD CONSTRAINT unique_student_course UNIQUE (student_id, course_id)"
-        );
+            stmtDDL.executeUpdate(
+                    "ALTER TABLE grades ADD CONSTRAINT unique_student_course UNIQUE (student_id, course_id)"
+            );
 
-        // Skip header
-        String[] headers = reader.readNext();
-        if (headers == null) {
-            System.out.println("CSV file is empty.");
-            return;
-        }
-
-        String insertSQL = "INSERT INTO grades (student_id, course_id, roll_no, email_id, grade) VALUES (?, ?, ?, ?, ?)";
-        PreparedStatement stmtInsert = conn.prepareStatement(insertSQL);
-
-        String[] line;
-        int count = 0;
-
-        while ((line = reader.readNext()) != null) {
-            stmtInsert.setString(1, line[0]);
-            stmtInsert.setString(2, line[1]);
-            stmtInsert.setString(3, line[2]);
-            stmtInsert.setString(4, line[3]);
-            stmtInsert.setString(5, line[4]);
-            stmtInsert.addBatch();
-            count++;
-
-            if (count % 100 == 0) {
-                stmtInsert.executeBatch();
+            String[] headers = reader.readNext();
+            if (headers == null) {
+                writeToLogFile("CSV file is empty.");
+                return;
             }
-        }
 
-        stmtInsert.executeBatch(); // Final batch
-        System.out.println("Inserted " + count + " rows into PostgreSQL.");
+            String insertSQL = "INSERT INTO grades (student_id, course_id, roll_no, email_id, grade) VALUES (?, ?, ?, ?, ?)";
+            PreparedStatement stmtInsert = conn.prepareStatement(insertSQL);
 
+            String[] line;
+            int count = 0;
+
+            while ((line = reader.readNext()) != null) {
+                stmtInsert.setString(1, line[0]);
+                stmtInsert.setString(2, line[1]);
+                stmtInsert.setString(3, line[2]);
+                stmtInsert.setString(4, line[3]);
+                stmtInsert.setString(5, line[4]);
+                stmtInsert.addBatch();
+                count++;
+
+                if (count % 100 == 0) {
+                    stmtInsert.executeBatch();
+                }
+            }
+
+            stmtInsert.executeBatch();
+            writeToLogFile("Inserted " + count + " rows into PostgreSQL.");
         } catch (Exception e) {
-            e.printStackTrace();
+            writeToLogFile("Error during importFile: " + getStackTrace(e));
         }
+    }
+
+    private void logAction(String action, String studentId, String courseId, String grade) {
+        String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
+                action.toUpperCase(), studentId, courseId, grade);
+        writeToLogFile(message);
+    }
+
+    private void writeToLogFile(String message) {
+        try {
+            Path logPath = Paths.get("src/main/resources/postgres-log.txt");
+            Files.write(
+                    logPath,
+                    (java.time.LocalDateTime.now() + " - " + message + System.lineSeparator()).getBytes(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+        } catch (IOException ex) {
+            ex.printStackTrace(); // fallback logging
+        }
+    }
+
+    private String getStackTrace(Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
     }
 }

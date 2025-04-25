@@ -1,0 +1,15 @@
+2025-04-25T12:28:12.952817955 - MongoDB connection initialized.
+2025-04-25T12:33:11.520106 - MongoDB connection initialized.
+2025-04-25T12:33:12.432366457 - Existing collection dropped.
+2025-04-25T12:33:12.492387818 - Successfully inserted 1000 documents.
+2025-04-25T12:33:12.504195429 - Documents in collection: 1000
+2025-04-25T12:33:25.777806118 - UPDATE - studentId=SID1132, courseId=CSE004, grade=D
+2025-04-25T12:33:26.290429062 - READ - studentId=SID1132, courseId=CSE004, grade=D
+2025-04-25T12:33:26.293444840 - UPDATE - studentId=SID101, courseId=CSE026, grade=A
+2025-04-25T12:33:58.568436476 - MongoDB connection initialized.
+2025-04-25T12:33:59.185167352 - Existing collection dropped.
+2025-04-25T12:33:59.230368731 - Successfully inserted 1000 documents.
+2025-04-25T12:33:59.237675457 - Documents in collection: 1000
+2025-04-25T12:34:03.952481731 - UPDATE - studentId=SID1132, courseId=CSE004, grade=D
+2025-04-25T12:34:04.202246595 - READ - studentId=SID1132, courseId=CSE004, grade=D
+2025-04-25T12:34:04.204934551 - UPDATE - studentId=SID101, courseId=CSE026, grade=A
