@@ -25,7 +25,7 @@ public abstract class DBSystem {
     public abstract void merge(String fromSystem);
 
     public static int compareTimestamps(String timestamp1, String timestamp2) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
 
         // Parse the timestamps into LocalDateTime objects
         LocalDateTime time1 = LocalDateTime.parse(timestamp1, formatter);
@@ -72,13 +72,13 @@ public abstract class DBSystem {
     public String getLatestUpdateTimestamp(String studentId, String courseId) {
         Path logPath = Paths.get("src/main/resources/" + name.toLowerCase() + "-log.txt");
         String latestTimestamp = null;
-
         try {
             List<String> lines = Files.readAllLines(logPath);
             for (String line : lines) {
                 if (line.contains("UPDATE") && line.contains("studentId=" + studentId) && line.contains("courseId=" + courseId)) {
                     String[] parts = line.split(" - ");
                     latestTimestamp = parts[0].trim(); // Extract the timestamp
+                    
                 }
             }
         } catch (IOException e) {
@@ -92,6 +92,33 @@ public abstract class DBSystem {
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
         return sw.toString();
+    }
+
+
+    protected void logAction(String action, String studentId, String courseId, String grade,String sourceDb) {
+        String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
+                action.toUpperCase(), studentId, courseId, grade);
+        if(sourceDb.equalsIgnoreCase("sql")){
+            writeToLogFile(message, "sql-log.txt");
+        }else if(sourceDb.equalsIgnoreCase("mongo")){
+            writeToLogFile(message, "mongo-log.txt");
+        }else if(sourceDb.equalsIgnoreCase("hive")){
+            writeToLogFile(message, "hive-log.txt");
+        }
+    }
+
+    protected void logAction(String action, String studentId, String courseId, String grade,String sourceDb, String timeStamp) {
+        String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
+                action.toUpperCase(), studentId, courseId, grade);
+
+        if(sourceDb.equalsIgnoreCase("sql")){
+            writeToLogFile(message, "sql-log.txt", timeStamp);
+        }else if(sourceDb.equalsIgnoreCase("mongo")){
+            writeToLogFile(message, "mongo-log.txt", timeStamp);
+        }else if(sourceDb.equalsIgnoreCase("hive")){
+            writeToLogFile(message, "hive-log.txt", timeStamp);
+        } 
+        // writeToLogFile(message, "mongo-log.txt", timeStamp);
     }
 
 }
