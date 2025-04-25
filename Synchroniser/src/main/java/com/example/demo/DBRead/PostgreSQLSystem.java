@@ -8,7 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -42,7 +46,8 @@ public class PostgreSQLSystem extends DBSystem {
 
     @PostConstruct
     public void initPostgres() throws SQLException {
-        conn = DriverManager.getConnection(url, user, password);
+        // conn = DriverManager.getConnection(url, user, password);
+        conn = DriverManager.getConnection("jdbc:postgresql://host.docker.internal:5432/student_course_grades", user, password);
     }
 
     @Override
