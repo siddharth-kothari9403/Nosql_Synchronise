@@ -140,9 +140,9 @@ public class PostgreSQLSystem extends DBSystem {
             }
 
             stmtInsert.executeBatch();
-            writeToLogFile("Inserted " + count + " rows into PostgreSQL.");
+            System.out.println("Inserted " + count + " rows into PostgreSQL.");
         } catch (Exception e) {
-            writeToLogFile("Error during importFile: " + getStackTrace(e));
+            System.out.println("Error during importFile: " + getStackTrace(e));
         }
     }
 

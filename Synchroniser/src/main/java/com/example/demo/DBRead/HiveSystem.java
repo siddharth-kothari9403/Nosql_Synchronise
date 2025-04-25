@@ -92,11 +92,11 @@ public class HiveSystem extends DBSystem {
         try {
             String dropMainTableSQL = "DROP TABLE IF EXISTS grades";
             jdbcTemplate.execute(dropMainTableSQL);
-            writeToLogFile("Dropped existing ORC table (if any).");
+            System.out.println("Dropped existing ORC table (if any).");
 
             String dropTempTableSQL = "DROP TABLE IF EXISTS temp_grades";
             jdbcTemplate.execute(dropTempTableSQL);
-            writeToLogFile("Dropped existing temporary CSV table (if any).");
+            System.out.println("Dropped existing temporary CSV table (if any).");
 
             String createTempTableSQL = "CREATE TABLE temp_grades (" +
                     "student_id STRING, " +
@@ -106,7 +106,7 @@ public class HiveSystem extends DBSystem {
                     "grade STRING" +
                     ") ROW FORMAT DELIMITED FIELDS TERMINATED BY ',' STORED AS TEXTFILE";
             jdbcTemplate.execute(createTempTableSQL);
-            writeToLogFile("Created temporary TEXTFILE table.");
+            System.out.println("Created temporary TEXTFILE table.");
 
             jdbcTemplate.execute("SET hive.support.concurrency = true");
             jdbcTemplate.execute("SET hive.txn.manager = org.apache.hadoop.hive.ql.lockmgr.DbTxnManager");
@@ -127,18 +127,18 @@ public class HiveSystem extends DBSystem {
                     "STORED AS ORC " +
                     "TBLPROPERTIES ('transactional'='true')";
             jdbcTemplate.execute(createMainTableSQL);
-            writeToLogFile("Created transactional ORC table.");
+            System.out.println("Created transactional ORC table.");
 
             String loadCSVSQL = "LOAD DATA LOCAL INPATH '/opt/hive/mydata/student_grades_noheader.csv' INTO TABLE temp_grades";
             jdbcTemplate.execute(loadCSVSQL);
-            writeToLogFile("Loaded CSV data into temporary table.");
+            System.out.println("Loaded CSV data into temporary table.");
 
             String insertSQL = "INSERT INTO TABLE grades SELECT * FROM temp_grades";
             jdbcTemplate.execute(insertSQL);
-            writeToLogFile("Inserted data from temporary table into transactional ORC table.");
+            System.out.println("Inserted data from temporary table into transactional ORC table.");
 
         } catch (Exception e) {
-            writeToLogFile("Error during importFile: " + getStackTrace(e));
+            System.out.println("Error during importFile: " + getStackTrace(e));
         }
     }
 

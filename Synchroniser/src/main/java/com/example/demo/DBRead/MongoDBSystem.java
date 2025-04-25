@@ -109,12 +109,12 @@ public class MongoDBSystem extends DBSystem {
         try (CSVReader reader = new CSVReader(new FileReader(csvFilePath))) {
             if (database.listCollectionNames().into(new ArrayList<>()).contains(collectionName)) {
                 collection.drop();
-                writeToLogFile("Existing collection dropped.");
+                System.out.println("Existing collection dropped.");
             }
 
             String[] headers = reader.readNext();
             if (headers == null) {
-                writeToLogFile("CSV file is empty.");
+                System.out.println("CSV file is empty.");
                 return;
             }
 
@@ -134,15 +134,15 @@ public class MongoDBSystem extends DBSystem {
 
             if (!documents.isEmpty()) {
                 collection.insertMany(documents);
-                writeToLogFile("Successfully inserted " + documents.size() + " documents.");
+                System.out.println("Successfully inserted " + documents.size() + " documents.");
             } else {
-                writeToLogFile("No data found in CSV.");
+                System.out.println("No data found in CSV.");
             }
 
             long count = database.getCollection(collectionName).countDocuments();
-            writeToLogFile("Documents in collection: " + count);
+            System.out.println("Documents in collection: " + count);
         } catch (Exception e) {
-            writeToLogFile("Error during importFile: " + getStackTrace(e));
+            System.out.println("Error during importFile: " + getStackTrace(e));
         }
     }
 
