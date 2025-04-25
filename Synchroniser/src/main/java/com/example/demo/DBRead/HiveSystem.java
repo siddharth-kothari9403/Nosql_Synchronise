@@ -137,10 +137,4 @@ public class HiveSystem extends DBSystem {
                                        action.toUpperCase(), studentId, courseId, grade);
         writeToLogFile(message, "hive-log.txt");
     }
-
-    private String getStackTrace(Exception e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
-    }
 }

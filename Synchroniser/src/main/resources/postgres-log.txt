@@ -1,3 +1,0 @@
-2025-04-25T15:47:08.598944 - UPDATE - studentId=SID1310, courseId=CSE020, grade=C+
-2025-04-25T15:47:08.753379 - READ - studentId=SID1310, courseId=CSE020, grade=C+
-2025-04-25T15:47:08.754202 - READ - studentId=SID403, courseId=CSE013, grade=Not Found

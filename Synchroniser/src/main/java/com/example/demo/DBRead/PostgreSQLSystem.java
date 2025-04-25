@@ -31,7 +31,7 @@ public class PostgreSQLSystem extends DBSystem {
     private String password;
 
     public PostgreSQLSystem() throws SQLException {
-        super("postgres");
+        super("sql");
     }
 
     @PostConstruct
@@ -137,12 +137,6 @@ public class PostgreSQLSystem extends DBSystem {
     private void logAction(String action, String studentId, String courseId, String grade) {
         String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
                 action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message, "postgres-log.txt");
-    }
-
-    private String getStackTrace(Exception e) {
-        StringWriter sw = new StringWriter();
-        e.printStackTrace(new PrintWriter(sw));
-        return sw.toString();
+        writeToLogFile(message, "sql-log.txt");
     }
 }

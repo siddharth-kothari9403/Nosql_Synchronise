@@ -1,24 +1,18 @@
 package com.example.demo.DBRead;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.*;
-import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public abstract class DBSystem {
     protected String name;
 
-    // Operation log: each system keeps a map of other systems' oplogs
-    protected static Map<String, List<Operation>> oplogs = new HashMap<>();
-
     public DBSystem(String name) {
         this.name = name;
-        if (!oplogs.containsKey(name)) {
-            oplogs.put(name, new ArrayList<>());
-        }
     }
 
     // Read grade for a given student ID
@@ -30,10 +24,20 @@ public abstract class DBSystem {
     // Merge updates from another system based on oplogs
     public abstract void merge(String fromSystem);
 
+    public static int compareTimestamps(String timestamp1, String timestamp2) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+
+        // Parse the timestamps into LocalDateTime objects
+        LocalDateTime time1 = LocalDateTime.parse(timestamp1, formatter);
+        LocalDateTime time2 = LocalDateTime.parse(timestamp2, formatter);
+
+        // Compare the timestamps
+        return time1.compareTo(time2);
+    }
+
     // Log an operation to this system’s oplog
     protected void logOperation(String opType, String studentId, String courseId, String value) {
         Operation op = new Operation(opType, studentId, courseId,value);
-        oplogs.get(name).add(op);
         System.out.printf("[%s] Logged operation: %s%n", name.toUpperCase(), op);
     }
 
@@ -51,5 +55,43 @@ public abstract class DBSystem {
         }
     }
 
+    protected void writeToLogFile(String message, String logfile, String timestamp) {
+        try {
+            Path logPath = Paths.get("src/main/resources/" + logfile);
+            Files.write(
+                    logPath,
+                    (timestamp + " - " + message + System.lineSeparator()).getBytes(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public String getLatestUpdateTimestamp(String studentId, String courseId) {
+        Path logPath = Paths.get("src/main/resources/" + name.toLowerCase() + "-log.txt");
+        String latestTimestamp = null;
+
+        try {
+            List<String> lines = Files.readAllLines(logPath);
+            for (String line : lines) {
+                if (line.contains("UPDATE") && line.contains("studentId=" + studentId) && line.contains("courseId=" + courseId)) {
+                    String[] parts = line.split(" - ");
+                    latestTimestamp = parts[0].trim(); // Extract the timestamp
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error reading log file: " + getStackTrace(e));
+        }
+
+        return latestTimestamp;
+    }
+
+    protected String getStackTrace(Exception e) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        return sw.toString();
+    }
 
 }
