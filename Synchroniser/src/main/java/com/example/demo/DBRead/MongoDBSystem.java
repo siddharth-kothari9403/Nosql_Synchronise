@@ -1,10 +1,8 @@
 package com.example.demo.DBRead;
 
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,9 +55,9 @@ public class MongoDBSystem extends DBSystem {
             database = mongoClient.getDatabase(databaseName);
             collection = database.getCollection(collectionName);
 
-            writeToLogFile("MongoDB connection initialized.");
+            System.out.println("MongoDB connection initialized.");
         } catch (Exception e) {
-            writeToLogFile("Failed to initialize MongoDB connection: " + getStackTrace(e));
+            System.out.println("Failed to initialize MongoDB connection: " + getStackTrace(e));
             throw new RuntimeException("Failed to initialize MongoDB connection", e);
         }
     }
@@ -96,13 +94,15 @@ public class MongoDBSystem extends DBSystem {
 
     @Override
     public void merge(String fromSystem) {
-        for (Operation op : oplogs.getOrDefault(fromSystem, new ArrayList<>())) {
-            if (op.opType.equals("update")) {
-                updateGrade(op.studentId, op.courseId, op.value);
-                logOperation("merge_update", op.studentId, op.courseId, op.value);
-                logAction("merge_update", op.studentId, op.courseId, op.value);
-            }
+        writeToLogFile("MONGO MERGE " + fromSystem, "mongo-log.txt");
+        if(fromSystem.equalsIgnoreCase("hive")) {
+            // MONGO MERGE HIVE
+
+        } else if (fromSystem.equalsIgnoreCase("sql")) {
+            // MONGO MERGE SQL
+            
         }
+        writeToLogFile("MONGO MERGE " + fromSystem, fromSystem.toLowerCase() + "-log.txt");
     }
 
     public void importFile() {
@@ -149,22 +149,10 @@ public class MongoDBSystem extends DBSystem {
     private void logAction(String action, String studentId, String courseId, String grade) {
         String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
                 action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message);
+        writeToLogFile(message, "mongo-log.txt");
     }
 
-    private void writeToLogFile(String message) {
-        try {
-            Path logPath = Paths.get("src/main/resources/mongo-log.txt");
-            Files.write(
-                    logPath,
-                    (java.time.LocalDateTime.now() + " - " + message + System.lineSeparator()).getBytes(),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND
-            );
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-    }
+    
 
     private String getStackTrace(Exception e) {
         StringWriter sw = new StringWriter();

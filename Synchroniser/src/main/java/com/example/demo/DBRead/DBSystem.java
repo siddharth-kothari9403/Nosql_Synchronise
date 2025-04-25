@@ -1,5 +1,8 @@
 package com.example.demo.DBRead;
 
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,4 +36,20 @@ public abstract class DBSystem {
         oplogs.get(name).add(op);
         System.out.printf("[%s] Logged operation: %s%n", name.toUpperCase(), op);
     }
+
+    protected void writeToLogFile(String message, String logfile) {
+        try {
+            Path logPath = Paths.get("src/main/resources/" + logfile);
+            Files.write(
+                    logPath,
+                    (java.time.LocalDateTime.now() + " - " + message + System.lineSeparator()).getBytes(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+
 }

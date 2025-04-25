@@ -1,15 +1,9 @@
 package com.example.demo.DBRead;
 
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.sql.*;
-import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -61,7 +55,7 @@ public class PostgreSQLSystem extends DBSystem {
             logOperation("read", studentId, courseId, returnString);
             logAction("read", studentId, courseId, returnString);
         } catch (SQLException e) {
-            writeToLogFile("Error during readGrade: " + getStackTrace(e));
+            System.out.println(getStackTrace(e));
         }
 
         return returnString;
@@ -79,19 +73,13 @@ public class PostgreSQLSystem extends DBSystem {
             logOperation("update", studentId, courseId, grade);
             logAction("update", studentId, courseId, grade);
         } catch (SQLException e) {
-            writeToLogFile("Error during updateGrade: " + getStackTrace(e));
+            System.out.println(getStackTrace(e));
         }
     }
 
     @Override
     public void merge(String fromSystem) {
-        for (Operation op : oplogs.getOrDefault(fromSystem, new ArrayList<>())) {
-            if (op.opType.equals("update")) {
-                updateGrade(op.studentId, op.courseId, op.value);
-                logOperation("merge_update", op.studentId, op.courseId, op.value);
-                logAction("merge_update", op.studentId, op.courseId, op.value);
-            }
-        }
+        
     }
 
     public void importFile() {
@@ -115,7 +103,7 @@ public class PostgreSQLSystem extends DBSystem {
 
             String[] headers = reader.readNext();
             if (headers == null) {
-                writeToLogFile("CSV file is empty.");
+                System.out.println("CSV file is empty.");
                 return;
             }
 
@@ -149,21 +137,7 @@ public class PostgreSQLSystem extends DBSystem {
     private void logAction(String action, String studentId, String courseId, String grade) {
         String message = String.format("%s - studentId=%s, courseId=%s, grade=%s",
                 action.toUpperCase(), studentId, courseId, grade);
-        writeToLogFile(message);
-    }
-
-    private void writeToLogFile(String message) {
-        try {
-            Path logPath = Paths.get("src/main/resources/postgres-log.txt");
-            Files.write(
-                    logPath,
-                    (java.time.LocalDateTime.now() + " - " + message + System.lineSeparator()).getBytes(),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND
-            );
-        } catch (IOException ex) {
-            ex.printStackTrace(); // fallback logging
-        }
+        writeToLogFile(message, "postgres-log.txt");
     }
 
     private String getStackTrace(Exception e) {
