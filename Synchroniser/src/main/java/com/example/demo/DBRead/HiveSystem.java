@@ -31,7 +31,7 @@ public class HiveSystem extends DBSystem {
 
     private JdbcTemplate jdbcTemplate;
 
-    public HiveSystem() throws SQLException {
+    public HiveSystem() throws SQLException, IOException {
         super("hive");
     }
 
@@ -48,7 +48,7 @@ public class HiveSystem extends DBSystem {
     }
 
     @Override
-    public String readGrade(String studentId, String courseId) {
+    public String readGrade(String studentId, String courseId, String timestamp) {
         String sql = "SELECT grade FROM grades WHERE student_id = ? AND course_id = ?";
         List<String> results = jdbcTemplate.query(
                 sql,
@@ -57,63 +57,23 @@ public class HiveSystem extends DBSystem {
         );
 
         String returnString = results.isEmpty() ? "Not Found" : results.get(0);
-        logOperation("read", studentId, courseId, returnString);
-        logAction("read", studentId, courseId, returnString,"hive");
+        logAction("read", studentId, courseId, returnString,"hive", timestamp);
         return returnString;
     }
 
     @Override
-    public void updateGrade(String studentId, String courseId, String grade) {
+    public void updateGrade(String studentId, String courseId, String grade, String timestamp) {
         try {
             String updateSQL = "UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?";
             jdbcTemplate.update(updateSQL, grade, studentId, courseId);
-
-            logOperation("update", studentId, courseId, grade);
-            logAction("update", studentId, courseId, grade, "hive");
+            logAction("update", studentId, courseId, grade, "hive", timestamp);
         } catch (Exception e) {
             System.out.println(getStackTrace(e));
         }
     }
 
     @Override
-    public void merge(String fromSystem) {
-        writeToLogFile(" HIVE MERGE "+ fromSystem, "hive-log.txt");
-        Path logPath = Paths.get("src/main/resources/" + fromSystem.toLowerCase() + "-log.txt");
-        try{
-            List<String> lines = Files.readAllLines(logPath);
-            Integer lastLineInd = -1;
-            for (int i = lines.size() - 1; i >= 0; i--) {
-                if (lines.get(i).contains("HIVE MERGE " + fromSystem.toUpperCase())) {
-                    lastLineInd = i;
-                    break;
-                }
-            }
-            for(Integer i = lastLineInd + 1; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (line.contains("UPDATE")) {
-                    String[] parts = line.split(" - ");
-                    String timestamp1 = parts[0].trim();
-                    String[] details = parts[2].split(", ");
-                    String studentId = details[0].split("=")[1].trim();
-                    String courseId = details[1].split("=")[1].trim();
-                    String grade = details[2].split("=")[1].trim();
-
-                    String timeStamp2 = getLatestUpdateTimestamp(studentId, courseId);
-                    if (timeStamp2 == null || timestamp1.compareTo(timeStamp2) > 0) {
-                        String updateSQL = "UPDATE grades SET grade = ? WHERE student_id = ? AND course_id = ?";
-                        jdbcTemplate.update(updateSQL, grade, studentId, courseId);
-                        logAction("update", studentId, courseId, grade, "hive", timestamp1);
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            System.out.println(getStackTrace(e));
-        }
-        writeToLogFile(" HIVE MERGE "+ fromSystem, fromSystem.toLowerCase() + "-log.txt");
-    }
-
-    public void importFile() throws IOException {
+    public void importFile() throws Exception {
         try {
             String dropMainTableSQL = "DROP TABLE IF EXISTS grades";
             jdbcTemplate.execute(dropMainTableSQL);

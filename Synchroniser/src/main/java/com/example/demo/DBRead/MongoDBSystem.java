@@ -45,7 +45,7 @@ public class MongoDBSystem extends DBSystem {
     private final String databaseName = "student_course_grades";
     private final String collectionName = "grades";
 
-    public MongoDBSystem() {
+    public MongoDBSystem() throws IOException {
         super("mongo");
     }
 
@@ -66,21 +66,19 @@ public class MongoDBSystem extends DBSystem {
     }
 
     @Override
-    public String readGrade(String studentId, String courseId) {
+    public String readGrade(String studentId, String courseId, String timestamp) {
         Document query = new Document("student_id", studentId)
                 .append("course_id", courseId);
 
         Document doc = collection.find(query).first();
         String returnString = (doc == null) ? "Not Found" : doc.getString("grade");
-
-        logOperation("read", studentId, courseId, returnString);
-        logAction("read", studentId, courseId, returnString,"mongo");
+        logAction("read", studentId, courseId, returnString,"mongo", timestamp);
 
         return returnString;
     }
 
     @Override
-    public void updateGrade(String studentId, String courseId, String grade) {
+    public void updateGrade(String studentId, String courseId, String grade, String timestamp) {
         Document updatedDoc = new Document("student_id", studentId)
                 .append("course_id", courseId)
                 .append("grade", grade);
@@ -91,61 +89,11 @@ public class MongoDBSystem extends DBSystem {
                 new ReplaceOptions().upsert(false)
         );
 
-        logOperation("update", studentId, courseId, grade);
-        logAction("update", studentId, courseId, grade,"mongo");
+        logAction("update", studentId, courseId, grade,"mongo", timestamp);
     }
 
     @Override
-    public void merge(String fromSystem) {
-        writeToLogFile("MONGO MERGE " + fromSystem, "mongo-log.txt");
-            
-        Path logPath = Paths.get("src/main/resources/" + fromSystem.toLowerCase() + "-log.txt");
-
-        try {
-            List<String> lines = Files.readAllLines(logPath);
-            Integer lastLineInd = -1;
-            for (int i = lines.size() - 1; i >= 0; i--) {
-                if (lines.get(i).contains("MONGO MERGE " + fromSystem.toUpperCase())) {
-                    lastLineInd = i;
-                    break;
-                }
-            }
-            for(Integer i = lastLineInd + 1; i < lines.size(); i++) {
-                String line = lines.get(i);
-                if (line.contains("UPDATE")) {
-                    String[] parts = line.split(" - ");
-                    String timestamp1 = parts[0].trim();
-    
-                    String[] details = parts[2].split(", ");
-                    String studentId = details[0].split("=")[1].trim();
-                    String courseId = details[1].split("=")[1].trim();
-                    String grade = details[2].split("=")[1].trim();
-                    
-                    String timestamp2 = getLatestUpdateTimestamp(studentId, courseId);
-                    
-                    if(timestamp2 == null || compareTimestamps(timestamp1, timestamp2) > 0){
-                        Document updatedDoc = new Document("student_id", studentId)
-                                .append("course_id", courseId)
-                                .append("grade", grade);
-    
-                        collection.replaceOne(
-                                new Document("student_id", studentId).append("course_id", courseId),
-                                updatedDoc,
-                                new ReplaceOptions().upsert(false)
-                        );
-    
-                        logAction("update", studentId, courseId, grade,"mongo",timestamp1);
-                    }
-                    
-                }
-            }   
-        }catch (IOException e) {
-            System.out.println("Error reading log file: " + getStackTrace(e));
-        }
-        writeToLogFile("MONGO MERGE " + fromSystem, fromSystem.toLowerCase() + "-log.txt");
-    }
-
-    public void importFile() {
+    public void importFile() throws Exception {
         try (CSVReader reader = new CSVReader(new FileReader(csvFilePath))) {
             if (database.listCollectionNames().into(new ArrayList<>()).contains(collectionName)) {
                 collection.drop();

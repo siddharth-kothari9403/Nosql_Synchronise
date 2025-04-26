@@ -3,6 +3,7 @@ package com.example.demo;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,29 +69,31 @@ public class TestCaseExecutor {
     }
 
     private void handleSet(String db, String sid, String cid, String grade) {
+        LocalDateTime ldt = java.time.LocalDateTime.now();
         switch (db.toUpperCase()) {
             case "HIVE":
-                hiveSystem.updateGrade(sid, cid, grade);
+                hiveSystem.updateGrade(sid, cid, grade, ldt.toString());
                 break;
             case "SQL":
-                postgreSQLSystem.updateGrade(sid, cid, grade);
+                postgreSQLSystem.updateGrade(sid, cid, grade, ldt.toString());
                 break;
             case "MONGO":
-                mongoDBSystem.updateGrade(sid, cid, grade);
+                mongoDBSystem.updateGrade(sid, cid, grade, ldt.toString());
                 break;
         }
     }
 
     private void handleGet(String db, String sid, String cid) {
+        LocalDateTime ldt = java.time.LocalDateTime.now();
         switch (db.toUpperCase()) {
             case "HIVE":
-                hiveSystem.readGrade(sid, cid);
+                hiveSystem.readGrade(sid, cid, ldt.toString());
                 break;
             case "SQL":
-                postgreSQLSystem.readGrade(sid, cid);
+                postgreSQLSystem.readGrade(sid, cid, ldt.toString());
                 break;
             case "MONGO":
-                mongoDBSystem.readGrade(sid, cid);
+                mongoDBSystem.readGrade(sid, cid, ldt.toString());
                 break;
         }
     }
