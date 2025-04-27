@@ -1,0 +1,7 @@
+HIVE: READ - studentId=SID1033, courseId=CSE016, grade=B
+SQL: READ - studentId=SID1033, courseId=CSE016, grade=C
+MONGO: READ - studentId=SID1033, courseId=CSE016, grade=C
+
+HIVE: READ - studentId=SID1156, courseId=CSE001, grade=E
+SQL: READ - studentId=SID1156, courseId=CSE001, grade=E
+MONGO: READ - studentId=SID1156, courseId=CSE001, grade=E
